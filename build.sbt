@@ -6,6 +6,18 @@ import Dependencies.Versions
 import de.heikoseeberger.sbtheader.FileType
 import interplay.ScalaVersions._
 
+version in ThisBuild := "1.1.4.1" // TODO: remove before merge
+isSnapshot in ThisBuild := false  // TODO: remove before merge
+
+val pgpSettings = sys.env.get("PGP_SECRET_RING") match {
+  case Some(path) =>
+    Seq(
+      pgpSecretRing := file(path),
+      pgpPassphrase := sys.env.get("PGP_PASSPHRASE").map(_.toCharArray)
+    )
+  case None => Seq()
+}
+
 val commonSettings = Seq(
   scalaVersion := scala212,
   headerEmptyLine := false,
@@ -14,7 +26,7 @@ val commonSettings = Seq(
       "Copyright (C) Lightbend Inc. <https://www.lightbend.com>"
     )
   )
-)
+) ++ pgpSettings
 
 lazy val root = project
   .in(file("."))
@@ -55,7 +67,7 @@ lazy val plugin = project
       s"-Dcxf.version=${Versions.CXF}",
     ),
     scriptedBufferLog := false,
-    scriptedDependencies := { () }
+    scriptedDependencies := (())
   )
 
 lazy val docs = (project in file("docs"))
@@ -92,13 +104,7 @@ def generateVersionFile = Def.task {
   Seq(file)
 }
 
-lazy val scriptedTask = TaskKey[Unit]("scripted-task")
-
 playBuildRepoName in ThisBuild := "play-soap"
-
-playBuildExtraPublish := {
-  (PgpKeys.publishSigned in plugin).value
-}
 
 dynverVTagPrefix in ThisBuild := false
 dynverSonatypeSnapshots in ThisBuild := true

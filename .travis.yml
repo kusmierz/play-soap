@@ -22,6 +22,11 @@ script:
   # Generate documentation
   - sbt docs/webStage || travis_terminate 1;
 
+before_deploy:
+  # GPG key for sign artifacts. See https://docs.travis-ci.com/user/encrypting-files/
+  # travis encrypt-file --pro play.gpg
+  - openssl aes-256-cbc -K $encrypted_7f03320c8901_key -iv $encrypted_7f03320c8901_iv -in play.gpg.enc -out $HOME/.gnupg/play.gpg -d
+
 deploy:
   # Publishing documentation
   - provider: pages
@@ -39,6 +44,14 @@ deploy:
     on:
       branch: master
       tags: false # Disable publishing for release tags
+
+  # Publishing release artifacts
+  - provider: script
+    skip_cleanup: true
+    script: scripts/publish-release
+    on:
+      branch: releases # TODO: remove before to merge
+#      tags: true
 
 cache:
   directories:
